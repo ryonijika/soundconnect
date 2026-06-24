@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DTMF通信（掲示板型）</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "MS Gothic", "Osaka", "Helvetica", "Arial", sans-serif;
+      background: #ffffff;
+      color: #000000;
+      padding: 16px;
+      max-width: 1100px;
+      margin: 0 auto;
+      line-height: 1.4;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    h2 {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 2px;
+      color: #000;
+    }
+
+    .sub {
+      color: #444;
+      font-size: 13px;
+      margin-top: -2px;
+      margin-bottom: 14px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #808080;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+
+    .card > label {
+      display: block;
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .sub-label {
+      font-weight: normal;
+      font-size: 12px;
+      color: #444;
+      margin-left: 4px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      align-items: flex-end;
+    }
+
+    .col {
+      flex: 1 1 140px;
+      min-width: 110px;
+    }
+
+    .col label {
+      display: block;
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 2px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 4px 6px;
+      font-size: 13px;
+      font-family: inherit;
+      border: 1px solid #606060;
+      background: #ffffff;
+      color: #000000;
+      outline: none;
+      border-radius: 0;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #000000;
+      background: #ffffff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 38px;
+      font-family: "Courier New", "MS Gothic", monospace;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button {
+      opacity: 0.5;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 14px;
+      font-size: 13px;
+      font-weight: normal;
+      font-family: inherit;
+      border: 1px solid #404040;
+      background: #f0f0f0;
+      color: #000000;
+      cursor: pointer;
+      border-radius: 0;
+      transition: none;
+      box-shadow: none;
+      letter-spacing: 0px;
+      line-height: 1.4;
+    }
+
+    button:hover {
+      background: #e0e0e0;
+      border-color: #000000;
+    }
+    button:active {
+      background: #cccccc;
+    }
+
+    button.green {
+      background: #f0f0f0;
+      border-color: #404040;
+    }
+    button.green:hover {
+      background: #e0e0e0;
+    }
+
+    button.red {
+      background: #f0f0f0;
+      border-color: #404040;
+    }
+    button.red:hover {
+      background: #e0e0e0;
+    }
+
+    button.send-btn {
+      background: #f0f0f0;
+      border-color: #004488;
+      color: #004488;
+      font-weight: bold;
+    }
+    button.send-btn:hover {
+      background: #e0eeff;
+      border-color: #004488;
+    }
+
+    button.ok-btn {
+      background: #f0f0f0;
+      border-color: #006600;
+      color: #006600;
+      font-weight: bold;
+    }
+    button.ok-btn:hover {
+      background: #e0ffe0;
+      border-color: #006600;
+    }
+
+    button.ng-btn {
+      background: #f0f0f0;
+      border-color: #880000;
+      color: #880000;
+      font-weight: bold;
+    }
+    button.ng-btn:hover {
+      background: #ffe0e0;
+      border-color: #880000;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .pill {
+      display: inline-block;
+      background: #f0f0f0;
+      padding: 2px 10px;
+      border: 1px solid #808080;
+      font-size: 12px;
+      font-weight: normal;
+      color: #000;
+      margin-right: 4px;
+      margin-bottom: 3px;
+    }
+
+    .pill b {
+      font-weight: bold;
+    }
+
+    #board {
+      background: #ffffff;
+      border: 1px solid #808080;
+      height: 360px;
+      overflow-y: auto;
+      padding: 6px 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      font-family: "MS Gothic", "Helvetica", sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .board-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .msg {
+      padding: 3px 4px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .msg .time {
+      color: #666;
+      font-size: 11px;
+      font-family: "Courier New", monospace;
+      white-space: nowrap;
+      min-width: 80px;
+    }
+
+    .msg .body {
+      color: #000;
+      word-break: break-all;
+      flex: 1;
+    }
+
+    .msg .body.ok {
+      color: #006600;
+      font-weight: bold;
+    }
+    .msg .body.ng {
+      color: #cc0000;
+      font-weight: bold;
+    }
+
+    .msg:last-child {
+      border-bottom: none;
+    }
+
+    .settings-compact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      align-items: center;
+      font-size: 12px;
+      color: #444;
+    }
+
+    .settings-compact label {
+      font-weight: normal;
+      font-size: 12px;
+      color: #444;
+      margin-right: 2px;
+    }
+
+    .settings-compact input[type="number"] {
+      width: 60px;
+      padding: 2px 4px;
+      font-size: 12px;
+    }
+
+    .settings-compact .sep {
+      color: #ccc;
+    }
+
+    #info {
+      margin-top: 8px;
+      padding: 4px 10px;
+      background: #f8f8f8;
+      border: 1px solid #808080;
+      font-size: 13px;
+      color: #000;
+      min-height: 28px;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .top-section {
+      flex-shrink: 0;
+    }
+
+    .board-section {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .board-section .card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .board-section .card #board {
+      flex: 1;
+    }
+
+    .bottom-section {
+      flex-shrink: 0;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .input-area input[type="text"] {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .input-area .btn-group {
+      flex-shrink: 0;
+      margin-top: 0;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 8px;
+      }
+      .card {
+        padding: 10px;
+      }
+      .col {
+        flex: 1 1 100%;
+        min-width: 0;
+      }
+      .row {
+        gap: 8px;
+      }
+      .btn-group button {
+        flex: 1 1 auto;
+      }
+      .settings-compact {
+        gap: 4px 10px;
+      }
+      .settings-compact input[type="number"] {
+        width: 50px;
+      }
+      #board {
+        height: 220px;
+      }
+      .msg {
+        flex-wrap: wrap;
+        gap: 2px 6px;
+      }
+      .msg .time {
+        min-width: 60px;
+        font-size: 10px;
+      }
+      .input-area {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .input-area .btn-group {
+        justify-content: center;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f0f0f0;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #a0a0a0;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #606060;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>DTMF通信（掲示板型）</h2>
+  <p class="sub"></p>
+
+  <div class="app-container">
+
+    <!-- ステータスと各種設定 -->
+    <div class="top-section">
+      <div class="card">
+        <div style="margin-bottom:6px;">
+          <span class="pill">送信 <b id="sTx" style="color:#000;">停止</b></span>
+          <span class="pill">受信 <b id="sRx" style="color:#000;">停止</b></span>
+          <span class="pill" id="statePill">受信状況 <b id="sSync" style="color:#000;">待機</b></span>
+          <span class="pill">受信ビット数 <b id="sBits">0</b></span>
+        </div>
+        <div id="info">待機中</div>
+      </div>
+
+      <!-- 各種パラメータ（シンボル長・ガード・閾値等） -->
+      <div class="card" style="padding:8px 14px; margin-bottom:14px;">
+        <div class="settings-compact">
+          <label>シンボル継続時間（ms） <input id="symMs" type="number" value="50" min="50" step="5" /> ms</label>
+          <span class="sep">|</span>
+          <label>ガード継続時間（ms） <input id="grdMs" type="number" value="15" min="15" step="2" /> ms</label>
+          <span class="sep">|</span>
+          <label>同期/終了シンボル数 <input id="preLen" type="number" value="10" min="10" step="1" /></label>
+          <span class="sep">|</span>
+          <label>出力振幅 <input id="amp" type="number" value="0.35" min="0.05" max="1" step="0.05" /></label>
+          <span class="sep">|</span>
+          <label>無音電力閾値 <input id="eThr" type="number" value="1e-5" step="1e-6" /></label>
+          <span class="sep">|</span>
+          <label>周波数SNR閾値 <input id="snrK" type="number" value="2.0" min="1.1" step="0.1" /></label>
+          <span class="sep">|</span>
+          <button id="btnMic" class="green" style="font-size:12px; padding:2px 10px;">受信開始</button>
+          <button id="btnStop" class="red" style="font-size:12px; padding:2px 10px;">停止</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 掲示板部分 -->
+    <div class="board-section">
+      <div class="card" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+        <label style="flex-shrink:0;">受信掲示板</label>
+        <div id="board"></div>
+      </div>
+    </div>
+
+    <!-- テキスト入力部分 -->
+    <div class="bottom-section">
+      <div class="card" style="margin-bottom:0;">
+        <div class="input-area">
+          <input id="msgInput" type="text" placeholder="メッセージを入力して" />
+          <div class="btn-group">
+            <button id="btnSend" class="send-btn">送信</button>
+            <button id="btnOK" class="ok-btn">OK</button>
+            <button id="btnNG" class="ng-btn">NG</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ---- 周波数テーブル ----
+    // DTMFで使う低群4本と高群4本。ここでは4種類のシンボルを定義。
+    const FSYNC = [770, 1633];
+    const FB0 = [697, 1209];
+    const FB1 = [941, 1336];
+    const FSTOP = [852, 1477];
+    const ALL_LO = [697, 770, 852, 941];
+    const ALL_HI = [1209, 1336, 1477, 1633];
+
+    const $ = id => document.getElementById(id);
+
+    // ---- テキストとビット列の相互変換 ----
+    // ビット列は '0'/'1' 以外を除去して正常化
+    function sanitize(s) { return (s || "").replace(/[^01]/g, ""); }
+
+    // UTF-8文字列 → ビット列（各バイトを8ビットに展開して連結）
+    function textToBits(t) {
+      return [...new TextEncoder().encode(t)].map(b => b.toString(2).padStart(8, "0")).join("");
+    }
+
+    // ビット列 → UTF-8文字列（8ビットごとにバイトに戻す）
+    function bitsToText(b) {
+      const c = sanitize(b),
+        bytes = [];
+      for (let i = 0; i + 7 < c.length; i += 8) bytes.push(parseInt(c.slice(i, i + 8), 2));
+      try { return new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(bytes)); } catch { return ""; }
+    }
+
+    // ビット列の先頭を8ビット区切りでデコード（端数は捨てる）
+    function tryDecode(bits) {
+      const usable = bits.slice(0, Math.floor(bits.length / 8) * 8);
+      return usable ? bitsToText(usable) : "";
+    }
+
+    // ---- Goertzel フィルタ ----
+    // 与えられたバッファ内の特定周波数成分のパワーを計算
+    function goertzel(buf, hz, sr) {
+      const N = buf.length,
+        k = Math.round(N * hz / sr);
+      const c = 2 * Math.cos(2 * Math.PI * k / N);
+      let s1 = 0,
+        s2 = 0;
+      for (let i = 0; i < N; i++) { const s = buf[i] + c * s1 - s2;
+        s2 = s1;
+        s1 = s; }
+      return (s1 * s1 + s2 * s2 - c * s1 * s2) / N;
+    }
+
+    // ---- シンボル判定 ----
+    // バッファから低群・高群のパワーを計算し、最もスコアの高いシンボルを返す。
+    // ノイズが多い場合は "GUARD"（無音扱い）にする。
+    function classify(buf, sr) {
+      const eThr = +$("eThr").value || 1e-5;
+      const snrK = +$("snrK").value || 2.0;
+
+      const energy = buf.reduce((s, v) => s + v * v, 0) / buf.length;
+      if (energy < eThr) return { sym: "GUARD", loP: [], hiP: [], energy };
+
+      const loP = ALL_LO.map(f => goertzel(buf, f, sr));
+      const hiP = ALL_HI.map(f => goertzel(buf, f, sr));
+
+      const candidates = [
+        { sym: "SYNC", score: loP[ALL_LO.indexOf(FSYNC[0])] + hiP[ALL_HI.indexOf(FSYNC[1])] },
+        { sym: "B0", score: loP[ALL_LO.indexOf(FB0[0])] + hiP[ALL_HI.indexOf(FB0[1])] },
+        { sym: "B1", score: loP[ALL_LO.indexOf(FB1[0])] + hiP[ALL_HI.indexOf(FB1[1])] },
+        { sym: "STOP", score: loP[ALL_LO.indexOf(FSTOP[0])] + hiP[ALL_HI.indexOf(FSTOP[1])] },
+      ];
+      candidates.sort((a, b) => b.score - a.score);
+
+      const best = candidates[0];
+      const second = candidates[1];
+
+      // 最大スコアが2番目に対して十分大きくなければ曖昧とみなす
+      if (best.score / (second.score + 1e-12) < snrK) {
+        return { sym: "GUARD", loP, hiP, energy };
+      }
+
+      return { sym: best.sym, loP, hiP, energy };
+    }
+
+    // ---- 掲示板への書き出し ----
+    // 受信テキストを日時付きで表示。 "OK" と "NG" は色分け。
+    function addBoardMessage(text) {
+      const board = $("board");
+      const div = document.createElement("div");
+      div.className = "msg";
+
+      const now = new Date();
+      const ts =
+        `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "time";
+      timeSpan.textContent = ts;
+
+      const bodySpan = document.createElement("span");
+      bodySpan.className = "body";
+      if (text === "OK") {
+        bodySpan.classList.add("ok");
+      } else if (text === "NG") {
+        bodySpan.classList.add("ng");
+      }
+      bodySpan.textContent = text;
+
+      div.appendChild(timeSpan);
+      div.appendChild(bodySpan);
+      board.appendChild(div);
+      board.scrollTop = board.scrollHeight;
+    }
+
+    // ================================================================
+    //  送信処理
+    // ================================================================
+    let txCtx = null,
+      txOscLo = null,
+      txOscHi = null,
+      txGain = null,
+      txOn = false;
+
+    // テキストを音声信号（DTMFシンボル列）として送信
+    async function sendText(text) {
+      if (!text || text.trim() === "") { $("info").textContent = "メッセージが空です。"; return; }
+
+      if (!txCtx) txCtx = new AudioContext();
+      if (txCtx.state !== "running") await txCtx.resume();
+      stopTx();
+
+      const bits = textToBits(text);
+      if (!bits) { $("info").textContent = "変換エラー"; return; }
+
+      const baseSymMs = Math.max(50, +$("symMs").value || 100);
+      const baseGrdMs = Math.max(15, +$("grdMs").value || 20);
+      const grdMs = Math.max(baseGrdMs, baseSymMs * 0.2);
+      const pre = Math.max(1, +$("preLen").value || 3);
+      const amp = Math.min(1, Math.max(0.05, +$("amp").value || 0.35));
+
+      // 発振器2つ（低群・高群用）と音量制御ノードを準備
+      txOscLo = txCtx.createOscillator();
+      txOscHi = txCtx.createOscillator();
+      txGain = txCtx.createGain();
+      txOscLo.type = txOscHi.type = "sine";
+      txGain.gain.value = 0;
+      txOscLo.connect(txGain);
+      txOscHi.connect(txGain);
+      txGain.connect(txCtx.destination);
+      txOscLo.start();
+      txOscHi.start();
+      txOn = true;
+      $("sTx").textContent = "送信中";
+      $("sTx").style.color = "#000";
+
+      // シンボル列を組み立てる（SYNC前置 + データ + STOP後置）
+      const syms = [];
+      for (let i = 0; i < pre; i++) syms.push("SYNC");
+      for (const b of bits) syms.push(b === "1" ? "B1" : "B0");
+      for (let i = 0; i < pre; i++) syms.push("STOP");
+
+      $("info").textContent = `送信中: ${text} (${bits.length}bit)`;
+
+      // 時間経過に合わせて周波数と音量をスケジュール
+      function scheduleSequence(t0) {
+        const symSec = baseSymMs / 1000;
+        const grdSec = grdMs / 1000;
+        const fade = Math.max(0.002, Math.min(0.015, symSec * 0.12));
+
+        let t = t0;
+        for (const s of syms) {
+          let lo, hi;
+          if (s === "SYNC") { [lo, hi] = FSYNC; } else if (s === "STOP") { [lo, hi] = FSTOP; } else if (s === "B1") { [lo,
+              hi
+            ] = FB1; } else { [lo, hi] = FB0; }
+          txOscLo.frequency.setValueAtTime(lo, t);
+          txOscHi.frequency.setValueAtTime(hi, t);
+          txGain.gain.setValueAtTime(0, t - 0.001);
+          txGain.gain.linearRampToValueAtTime(amp, t + fade);
+          txGain.gain.setValueAtTime(amp, t + symSec - fade);
+          txGain.gain.linearRampToValueAtTime(0, t + symSec);
+          txGain.gain.setValueAtTime(0, t + symSec + 0.001);
+          t += symSec + grdSec;
+        }
+        return t;
+      }
+
+      let nextT = txCtx.currentTime + 0.1;
+      txGain.gain.cancelScheduledValues(nextT);
+      txGain.gain.setValueAtTime(0, nextT);
+      nextT = scheduleSequence(nextT);
+
+      // 送信完了を監視
+      const checkCompletion = () => {
+        if (txCtx.currentTime >= nextT) {
+          txOn = false;
+          $("sTx").textContent = "完了";
+          $("sTx").style.color = "#000";
+          $("info").textContent = "送信完了: " + text;
+        } else {
+          setTimeout(checkCompletion, 100);
+        }
+      };
+      setTimeout(checkCompletion, (nextT - txCtx.currentTime) * 1000 + 50);
+    }
+
+    // 送信を強制停止
+    function stopTx() {
+      txOn = false;
+      try { txOscLo?.stop(); } catch {}
+      try { txOscHi?.stop(); } catch {}
+      try { txOscLo?.disconnect(); } catch {}
+      try { txOscHi?.disconnect(); } catch {}
+      try { txGain?.disconnect(); } catch {}
+      txOscLo = txOscHi = txGain = null;
+      $("sTx").textContent = "停止";
+      $("sTx").style.color = "#000";
+    }
+
+    // ================================================================
+    //  受信処理
+    // ================================================================
+    let rxCtx = null,
+      rxStream = null,
+      rxNode = null,
+      rxSrc = null,
+      rxMute = null;
+    let rxRing = [];
+    let rxSR = 44100;
+    let rxSymSamples = 0,
+      rxGrdSamples = 0,
+      rxSlotSamples = 0;
+    let rxPhase = "idle";
+    let rxSyncRun = 0,
+      rxStopRun = 0;
+    let rxFrameBits = "";
+    let rxLog = "";
+    let rafId = null;
+
+    // ガード区間のうち、シンボル判定に使う割合（後ろ側をスキップ）
+    const GUARD_SKIP_RATIO = 0.8;
+
+    // ステータス表示を更新
+    function setState(text, cls = "") {
+      const el = $("sSync");
+      el.textContent = text;
+      el.className = cls;
+      const pill = $("statePill");
+      pill.className = `pill ${cls}`;
+    }
+
+    // 受信状態をリセット
+    function rxReset() {
+      rxPhase = "idle";
+      rxSyncRun = 0;
+      rxStopRun = 0;
+      rxFrameBits = "";
+      setState("待機", "state-idle");
+      $("sBits").textContent = "0";
+    }
+
+    // 1シンボル分の判定結果を処理（フレーム構築・同期・終了検出）
+    function processSymbol(sym) {
+      const pre = Math.max(1, +$("preLen").value || 3);
+      if (sym === "GUARD") return;
+
+      // 同期待機フェーズ（SYNCを連続で待つ）
+      if (rxPhase === "idle" || rxPhase === "sync") {
+        if (sym === "SYNC") {
+          rxSyncRun++;
+          if (rxSyncRun >= pre) {
+            rxPhase = "frame";
+            rxFrameBits = "";
+            rxSyncRun = 0;
+            setState("フレーム受信中", "state-frame");
+            $("info").textContent = "フレーム開始";
+            $("sBits").textContent = "0";
+          }
+        } else {
+          rxSyncRun = 0;
+          if (rxPhase === "sync") rxPhase = "idle";
+        }
+        return;
+      }
+
+      // フレーム受信中
+      if (rxPhase === "frame") {
+        if (sym === "B0" || sym === "B1") {
+          rxFrameBits += sym === "B1" ? "1" : "0";
+          rxStopRun = 0;
+          $("sBits").textContent = rxFrameBits.length;
+        } else if (sym === "STOP") {
+          rxStopRun++;
+          if (rxStopRun >= pre) {
+            const text = tryDecode(rxFrameBits);
+            if (text) {
+              addBoardMessage(text);
+              $("info").textContent = "受信: " + text;
+            } else {
+              $("info").textContent = "復号失敗";
+            }
+            rxPhase = "idle";
+            rxStopRun = 0;
+            rxFrameBits = "";
+            setState("待機", "state-idle");
+            $("sBits").textContent = "0";
+          }
+        } else if (sym === "SYNC") {
+          // フレーム中のSYNCは無視（ノイズ対策として特に処理しない）
+        } else {
+          rxStopRun = 0;
+        }
+        return;
+      }
+    }
+
+    // マイクから届いた生PCMデータを処理
+    function onRawSamples(chunk) {
+      for (const v of chunk) rxRing.push(v);
+
+      // 1シンボル＋ガード分のサンプルが溜まったら切り出して判定
+      while (rxRing.length >= rxSlotSamples) {
+        const slot = rxRing.splice(0, rxSlotSamples);
+        const skip = Math.floor(rxGrdSamples * GUARD_SKIP_RATIO);
+        const win = slot.slice(skip, skip + rxSymSamples);
+        if (win.length < rxSymSamples * 0.8) break;
+        const res = classify(new Float32Array(win), rxSR);
+        processSymbol(res.sym);
+      }
+    }
+
+    // 受信開始（マイク起動）
+    async function startRx() {
+      if (!rxCtx) { rxCtx = new AudioContext(); }
+      if (rxCtx.state !== "running") await rxCtx.resume();
+      stopRx();
+
+      try {
+        rxStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            googEchoCancellation: false,
+            googAutoGainControl: false,
+            googNoiseSuppression: false,
+            googHighpassFilter: false,
+          },
+          video: false
+        });
+      } catch (e) { $("info").textContent = "マイク失敗: " + e.message; return; }
+
+      rxSR = rxCtx.sampleRate;
+      const symMs = Math.max(50, +$("symMs").value || 100);
+      const grdMs = Math.max(15, +$("grdMs").value || 20);
+      rxSymSamples = Math.round(rxSR * symMs / 1000);
+      rxGrdSamples = Math.round(rxSR * grdMs / 1000);
+      if (rxSymSamples < 32) rxSymSamples = 32;
+      if (rxGrdSamples < 4) rxGrdSamples = 4;
+      rxSlotSamples = rxSymSamples + rxGrdSamples;
+
+      // AudioWorklet を使って生データを取得
+      const WL_CODE = `
+class RawCollector extends AudioWorkletProcessor {
+  constructor(){super();this._buf=[];}
+  process(inputs){
+    const ch=inputs[0]?.[0];
+    if(ch){
+      for(let i=0;i<ch.length;i++) this._buf.push(ch[i]);
+      if(this._buf.length>=128){
+        this.port.postMessage(Float32Array.from(this._buf));
+        this._buf=[];
+      }
+    }
+    return true;
+  }
+}
+registerProcessor("raw-collector",RawCollector);
+`;
+      const blob = new Blob([WL_CODE], { type: "application/javascript" });
+      const url = URL.createObjectURL(blob);
+      await rxCtx.audioWorklet.addModule(url);
+      URL.revokeObjectURL(url);
+
+      rxNode = new AudioWorkletNode(rxCtx, "raw-collector");
+      rxNode.port.onmessage = e => onRawSamples(e.data);
+
+      rxSrc = rxCtx.createMediaStreamSource(rxStream);
+      rxMute = rxCtx.createGain();
+      rxMute.gain.value = 0;
+      rxSrc.connect(rxNode);
+      rxNode.connect(rxMute);
+      rxMute.connect(rxCtx.destination);
+
+      rxRing = [];
+      rxReset();
+      rxLog = "";
+      $("sRx").textContent = "受信中";
+      $("sRx").style.color = "#000";
+      $("info").textContent = "受信開始";
+    }
+
+    // 受信停止
+    function stopRx() {
+      try { rxNode?.disconnect(); } catch {}
+      try { rxSrc?.disconnect(); } catch {}
+      try { rxMute?.disconnect(); } catch {}
+      rxStream?.getTracks().forEach(t => t.stop());
+      rxNode = rxSrc = rxStream = rxMute = null;
+      if (rafId) { cancelAnimationFrame(rafId);
+        rafId = null; }
+      $("sRx").textContent = "停止";
+      $("sRx").style.color = "#000";
+      setState("-", "");
+    }
+
+    // 全停止
+    function stopAll() { stopTx();
+      stopRx(); }
+
+    // ================================================================
+    //  ボタンイベント
+    // ================================================================
+    $("btnSend").onclick = () => {
+      const msg = $("msgInput").value || "";
+      if (msg.trim() === "") { $("info").textContent = "メッセージを入力してください。"; return; }
+      sendText(msg);
+      $("msgInput").value = "";
+    };
+
+    $("btnOK").onclick = () => {
+      sendText("OK");
+      $("info").textContent = "OK を送信しました";
+    };
+
+    $("btnNG").onclick = () => {
+      sendText("NG");
+      $("info").textContent = "NG を送信しました";
+    };
+
+    $("btnMic").onclick = startRx;
+    $("btnStop").onclick = stopAll;
+
+    $("msgInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        $("btnSend").click();
+      }
+    });
+
+    window.addEventListener("beforeunload", stopAll);
+  </script>
+</body>
+</html>
