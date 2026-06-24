@@ -3,9 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DTMF通信 v3.19</title>
+  <title>DTMF通信</title>
   <style>
-    /* ----- 配置のみ。装飾・色味は一切排除 ----- */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -36,7 +35,6 @@
       margin-bottom: 14px;
     }
 
-    /* カード（単なる区画） */
     .card {
       background: #ffffff;
       border: 1px solid #808080;
@@ -58,7 +56,6 @@
       margin-left: 4px;
     }
 
-    /* フレックス配置 */
     .row {
       display: flex;
       flex-wrap: wrap;
@@ -79,7 +76,6 @@
       margin-bottom: 2px;
     }
 
-    /* 入力要素（枠線のみ） */
     input,
     textarea,
     select {
@@ -116,7 +112,6 @@
       opacity: 0.5;
     }
 
-    /* ボタン（単色・枠線のみ） */
     button {
       display: inline-flex;
       align-items: center;
@@ -175,7 +170,6 @@
       margin-top: 4px;
     }
 
-    /* ステータス表示（ピルではなく四角） */
     .pill {
       display: inline-block;
       background: #f0f0f0;
@@ -199,7 +193,6 @@
       color: #000;
     }
 
-    /* スペクトラム表示 */
     #cv {
       width: 100%;
       height: auto;
@@ -227,7 +220,6 @@
       display: inline-block;
     }
 
-    /* 履歴リスト */
     #decodeHistory {
       max-height: 200px;
       overflow-y: auto;
@@ -274,7 +266,6 @@
       margin-left: auto;
     }
 
-    /* モノスペース表示 */
     .mono {
       font-family: "Courier New", "MS Gothic", monospace;
       font-size: 12px;
@@ -309,7 +300,6 @@
       color: #000;
     }
 
-    /* レスポンシブ（幅調整のみ） */
     @media (max-width: 640px) {
       body {
         padding: 8px;
@@ -333,7 +323,6 @@
       }
     }
 
-    /* スクロールバー（簡素） */
     ::-webkit-scrollbar {
       width: 4px;
       height: 4px;
@@ -351,33 +340,32 @@
 </head>
 <body>
 
-  <h2>DTMF通信制御パネル</h2>
-  <p class="sub">送受信・復号・周波数解析モジュール</p>
+  <h2>DTMF通信</h2>
+  <p class="sub">送信・受信</p>
 
-  <!-- メイン設定 -->
   <div class="card">
     <div class="row">
       <div class="col">
         <label>送信元テキスト</label>
         <input id="txtIn" type="text" placeholder="UTF-8" />
         <div class="btn-group" style="margin-top:4px;">
-          <button id="btnEncode">ビット列変換</button>
-          <button id="btnDecode" class="secondary">テキスト復号（検証）</button>
+          <button id="btnEncode">ビット列に変換</button>
+          <button id="btnDecode" class="secondary">テキストに復号（検証用）</button>
         </div>
       </div>
       <div class="col">
-        <label>送信ビット列</label>
+        <label>ビット列</label>
         <textarea id="bitIn" rows="2" placeholder=""></textarea>
       </div>
     </div>
 
     <div class="row" style="margin-top:12px;">
       <div class="col">
-        <label>シンボル継続時間 (ms) <span class="sub-label">最小50</span></label>
+        <label>シンボル継続時間 (ms) <span class="sub-label">最小50ms</span></label>
         <input id="symMs" type="number" value="50" min="50" step="5" />
       </div>
       <div class="col">
-        <label>ガード区間 (ms) <span class="sub-label">最小15</span></label>
+        <label>ガード継続時間(ms) <span class="sub-label">最小15ms</span></label>
         <input id="grdMs" type="number" value="15" min="15" step="2" />
       </div>
       <div class="col">
@@ -411,47 +399,41 @@
     <div style="margin-top:10px;">
       <span class="pill">送信 <b id="sTx" style="color:#000;">停止</b></span>
       <span class="pill">受信 <b id="sRx" style="color:#000;">停止</b></span>
-      <span class="pill" id="statePill">ステータス <b id="sSync" style="color:#000;">待機</b></span>
+      <span class="pill" id="statePill">受信状況 <b id="sSync" style="color:#000;">待機</b></span>
       <span class="pill">受信ビット数 <b id="sBits">0</b></span>
     </div>
     <div id="info">待機中</div>
   </div>
 
-  <!-- スペクトラム -->
   <div class="card">
     <label>周波数スペクトラム</label>
     <div class="spec-info">
       <span>識別シンボル: <span id="symDisp" style="color:#000;">-</span></span>
-      <span>f0電力: <span id="p0d">-</span></span>
-      <span>f1電力: <span id="p1d">-</span></span>
+      <span>F0電力: <span id="p0d">-</span></span>
+      <span>F1電力: <span id="p1d">-</span></span>
     </div>
     <canvas id="cv" height="90"></canvas>
   </div>
 
-  <!-- 履歴 -->
   <div class="card">
-    <label>復号フレーム履歴</label>
+    <label>復号結果履歴</label>
     <div id="decodeHistory">
       <div style="font-size:12px; color:#444; padding:4px 10px;">フレーム完了後に表示</div>
     </div>
   </div>
 
-  <!-- 復号結果 -->
   <div class="card">
-    <label>最終復号テキスト</label>
+    <label>最新の復号結果</label>
     <div id="decoded">—</div>
   </div>
 
-  <!-- 生ログ -->
   <div class="card">
-    <label>受信シンボル列 <span class="sub-label">S=SYNC, E=STOP, .=無音, 0/1=データ</span></label>
+    <label>受信したシンボル列 <span class="sub-label">S=SYNC, E=STOP, .=無音, 0/1=ビット列</span></label>
     <div class="mono" id="rxLog"></div>
   </div>
 
   <script>
-    // ------------------------------------------------------------
-    // 周波数テーブル
-    // ------------------------------------------------------------
+    // 各シンボルで使用する周波数ペアの定義
     const FSYNC = [770, 1633];
     const FB0 = [697, 1209];
     const FB1 = [941, 1336];
@@ -461,15 +443,15 @@
 
     const $ = id => document.getElementById(id);
 
-    // ------------------------------------------------------------
-    // 文字列 ↔ ビット列 変換
-    // ------------------------------------------------------------
+    // ビット列のサニタイズ（'0'/'1'以外を除去）
     function sanitize(s) { return (s || "").replace(/[^01]/g, ""); }
 
+    // UTF-8文字列 → ビット列（8bitごとに連結）
     function textToBits(t) {
       return [...new TextEncoder().encode(t)].map(b => b.toString(2).padStart(8, "0")).join("");
     }
 
+    // ビット列 → UTF-8文字列（8bitごとにデコード）
     function bitsToText(b) {
       const c = sanitize(b),
         bytes = [];
@@ -477,6 +459,7 @@
       try { return new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(bytes)); } catch { return ""; }
     }
 
+    // ビット列を16進数表記に変換（表示用）
     function bitsToHex(b) {
       const c = sanitize(b),
         hex = [];
@@ -485,15 +468,18 @@
       return hex.join(" ");
     }
 
+    // ビット列からテキスト復号を試みる（余りビットは切り捨て）
     function tryDecode(bits) {
       const usable = bits.slice(0, Math.floor(bits.length / 8) * 8);
       return usable ? bitsToText(usable) : "";
     }
 
+    // HTMLエスケープ（ログ表示用）
     function escapeHtml(s) {
       return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
+    // 復号履歴に1件追加
     function addDecodeLog(bits, hex, text, note = "") {
       const div = document.createElement("div");
       div.className = "log-item";
@@ -512,9 +498,7 @@
       container.scrollTop = container.scrollHeight;
     }
 
-    // ------------------------------------------------------------
-    // Goertzel と シンボル判定
-    // ------------------------------------------------------------
+    // Goertzelアルゴリズムで特定周波数の電力を計算
     function goertzel(buf, hz, sr) {
       const N = buf.length,
         k = Math.round(N * hz / sr);
@@ -527,6 +511,7 @@
       return (s1 * s1 + s2 * s2 - c * s1 * s2) / N;
     }
 
+    // 受信バッファからシンボルを判定（低群/高群の電力比較）
     function classify(buf, sr) {
       const eThr = +$("eThr").value || 1e-6;
       const energy = buf.reduce((s, v) => s + v * v, 0) / buf.length;
@@ -558,9 +543,7 @@
       return { sym, loP, hiP, energy, loF, hiF };
     }
 
-    // ------------------------------------------------------------
-    // スペクトラム描画（単色）
-    // ------------------------------------------------------------
+    // スペクトラム描画（低群・高群の各周波数パワーを棒グラフで表示）
     const cv = $("cv"),
       cx = cv.getContext("2d");
 
@@ -594,15 +577,14 @@
       cx.fillText(sym || "?", W - 48, 22);
     }
 
-    // ------------------------------------------------------------
-    // 送信
-    // ------------------------------------------------------------
+    // ---- 送信関連 ----
     let txCtx = null,
       txOscLo = null,
       txOscHi = null,
       txGain = null,
       txOn = false;
 
+    // 送信を開始（ビット列をDTMFシンボル列に変換し、AudioContextで出力）
     async function startSend() {
       if (!txCtx) txCtx = new AudioContext();
       if (txCtx.state !== "running") await txCtx.resume();
@@ -633,6 +615,7 @@
       $("sTx").textContent = "送信中";
       $("sTx").style.color = "#000";
 
+      // シンボル列を組み立て（プリアンブル＋データ＋ポストアンブル）
       const syms = [];
       for (let i = 0; i < pre; i++) syms.push("SYNC");
       for (const b of bits) syms.push(b === "1" ? "B1" : "B0");
@@ -640,6 +623,7 @@
 
       $("info").textContent = `送信開始: ${syms.length}シンボル (${bits.length}bit) Sym=${baseSymMs}ms Guard=${grdMs}ms`;
 
+      // シンボル列を時間軸にスケジュール
       function scheduleSequence(t0) {
         const symSec = baseSymMs / 1000;
         const grdSec = grdMs / 1000;
@@ -668,6 +652,7 @@
       txGain.gain.setValueAtTime(0, nextT);
       nextT = scheduleSequence(nextT);
 
+      // 送信完了を監視
       const checkCompletion = () => {
         if (txCtx.currentTime >= nextT) {
           txOn = false;
@@ -681,6 +666,7 @@
       setTimeout(checkCompletion, (nextT - txCtx.currentTime) * 1000 + 50);
     }
 
+    // 送信を強制停止
     function stopTx() {
       txOn = false;
       try { txOscLo?.stop(); } catch {}
@@ -693,9 +679,7 @@
       $("sTx").style.color = "#000";
     }
 
-    // ------------------------------------------------------------
-    // 受信
-    // ------------------------------------------------------------
+    // ---- 受信関連 ----
     let rxCtx = null,
       rxStream = null,
       rxNode = null,
@@ -713,6 +697,7 @@
     let rxLog = "";
     let rafId = null;
 
+    // 受信ステータス表示更新
     function setState(text, cls = "") {
       const el = $("sSync");
       el.textContent = text;
@@ -721,6 +706,7 @@
       pill.className = `pill ${cls}`;
     }
 
+    // 受信状態をリセット
     function rxReset() {
       rxPhase = "idle";
       rxSyncRun = 0;
@@ -730,6 +716,7 @@
       $("sBits").textContent = "0";
     }
 
+    // シンボル判定結果を処理（状態遷移・ビット蓄積・フレーム終了判定）
     function processSymbol(sym) {
       const pre = Math.max(1, +$("preLen").value || 3);
       const c = sym === "SYNC" ? "S" : sym === "STOP" ? "E" : sym === "B0" ? "0" : sym === "B1" ? "1" : sym === "GUARD" ?
@@ -742,6 +729,7 @@
 
       if (sym === "GUARD") return;
 
+      // 同期検出フェーズ（SYNCが規定数連続で来るまで待機）
       if (rxPhase === "idle" || rxPhase === "sync") {
         if (sym === "SYNC") {
           rxSyncRun++;
@@ -760,6 +748,7 @@
         return;
       }
 
+      // データフレーム受信中
       if (rxPhase === "frame") {
         if (sym === "B0" || sym === "B1") {
           rxFrameBits += sym === "B1" ? "1" : "0";
@@ -785,7 +774,7 @@
             $("sBits").textContent = "0";
           }
         } else if (sym === "SYNC") {
-          // 無視
+          // フレーム中のSYNCは無視
         } else {
           rxStopRun = 0;
         }
@@ -793,6 +782,7 @@
       }
     }
 
+    // スペクトラム描画の定期更新（requestAnimationFrame）
     function updateVisuals() {
       if (!rxNode) { rafId = null; return; }
       if (rxRing.length >= rxSymSamples && rxSymSamples > 0) {
@@ -812,9 +802,11 @@
       rafId = requestAnimationFrame(updateVisuals);
     }
 
+    // AudioWorkletからの生サンプルを受け取り、リングバッファに蓄積
     function onRawSamples(chunk) {
       for (const v of chunk) rxRing.push(v);
 
+      // シンボル＋ガード区間ごとにスライスしてシンボル判定
       while (rxRing.length >= rxSlotSamples) {
         const slot = rxRing.splice(0, rxSlotSamples);
         const skip = Math.floor(rxGrdSamples * 0.5);
@@ -825,6 +817,7 @@
       }
     }
 
+    // 受信開始（マイク入力＋AudioWorklet）
     async function startRx() {
       if (!rxCtx) { rxCtx = new AudioContext(); }
       if (rxCtx.state !== "running") await rxCtx.resume();
@@ -854,6 +847,7 @@
       if (rxGrdSamples < 4) rxGrdSamples = 4;
       rxSlotSamples = rxSymSamples + rxGrdSamples;
 
+      // AudioWorklet用コード（生のPCMをメインスレッドに送信）
       const WL_CODE = `
 class RawCollector extends AudioWorkletProcessor {
   constructor(){super();this._buf=[];}
@@ -899,6 +893,7 @@ registerProcessor("raw-collector",RawCollector);
       updateVisuals();
     }
 
+    // 受信停止（リソース解放）
     function stopRx() {
       try { rxNode?.disconnect(); } catch {}
       try { rxSrc?.disconnect(); } catch {}
@@ -912,12 +907,11 @@ registerProcessor("raw-collector",RawCollector);
       setState("-", "");
     }
 
+    // 全停止
     function stopAll() { stopTx();
       stopRx(); }
 
-    // ------------------------------------------------------------
-    // ボタン関連付け
-    // ------------------------------------------------------------
+    // ---- ボタンイベント ----
     $("btnEncode").onclick = () => {
       const raw = $("txtIn").value || "";
       $("bitIn").value = textToBits(raw);
@@ -930,6 +924,7 @@ registerProcessor("raw-collector",RawCollector);
     $("btnMic").onclick = startRx;
     $("btnStop").onclick = stopAll;
 
+    // ページ離脱時に確実に停止
     window.addEventListener("beforeunload", stopAll);
   </script>
 </body>
