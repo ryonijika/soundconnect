@@ -393,11 +393,11 @@
     <div class="row" style="margin-top:8px;">
       <div class="col">
         <label>無音電力閾値</label>
-        <input id="eThr" type="number" value="1e-5" step="1e-6" />
+        <input id="eThr" type="number" value="1e-6" step="1e-7" />
       </div>
       <div class="col">
         <label>周波数SNR閾値</label>
-        <input id="snrK" type="number" value="2.0" min="1.1" step="0.1" />
+        <input id="snrK" type="number" value="1.5" min="1.1" step="0.1" />
       </div>
       <div class="col"></div>
     </div>
@@ -513,7 +513,7 @@
     }
 
     // ------------------------------------------------------------
-    // Goertzel と シンボル判定（SNR閾値対応版）
+    // Goertzel と シンボル判定
     // ------------------------------------------------------------
     function goertzel(buf, hz, sr) {
       const N = buf.length,
@@ -528,8 +528,7 @@
     }
 
     function classify(buf, sr) {
-      const eThr = +$("eThr").value || 1e-5;
-      const snrK = +$("snrK").value || 2.0;
+      const eThr = +$("eThr").value || 1e-6;
       const energy = buf.reduce((s, v) => s + v * v, 0) / buf.length;
       if (energy < eThr) return { sym: "GUARD", loP: [], hiP: [], energy };
 
@@ -542,14 +541,11 @@
       const loF = ALL_LO[loIdx],
         hiF = ALL_HI[hiIdx];
       let sym = null;
-
-      // まず既知の組み合わせに一致するか確認
       if (loF === FSYNC[0] && hiF === FSYNC[1]) sym = "SYNC";
       else if (loF === FB0[0] && hiF === FB0[1]) sym = "B0";
       else if (loF === FB1[0] && hiF === FB1[1]) sym = "B1";
       else if (loF === FSTOP[0] && hiF === FSTOP[1]) sym = "STOP";
       else {
-        // 一致しない場合はスコアベースで選定
         const candidates = [
           { sym: "SYNC", score: loP[ALL_LO.indexOf(FSYNC[0])] + hiP[ALL_HI.indexOf(FSYNC[1])] },
           { sym: "B0", score: loP[ALL_LO.indexOf(FB0[0])] + hiP[ALL_HI.indexOf(FB0[1])] },
@@ -557,15 +553,8 @@
           { sym: "STOP", score: loP[ALL_LO.indexOf(FSTOP[0])] + hiP[ALL_HI.indexOf(FSTOP[1])] },
         ];
         candidates.sort((a, b) => b.score - a.score);
-        const best = candidates[0];
-        const second = candidates[1];
-        // SNR チェック：最大スコアが2番目に対して snrK 倍以上なければ信頼できない → GUARD
-        if (best.score / (second.score + 1e-12) < snrK) {
-          return { sym: "GUARD", loP, hiP, energy };
-        }
-        sym = best.sym;
+        sym = candidates[0].sym;
       }
-
       return { sym, loP, hiP, energy, loF, hiF };
     }
 
@@ -705,7 +694,7 @@
     }
 
     // ------------------------------------------------------------
-    // 受信（ガードスキップ比率 0.8 に変更）
+    // 受信
     // ------------------------------------------------------------
     let rxCtx = null,
       rxStream = null,
@@ -723,9 +712,6 @@
     let rxFrameBits = "";
     let rxLog = "";
     let rafId = null;
-
-    // ガード区間のスキップ比率（0.8 = シンボル後半の80%をスキップして安定部分を抽出）
-    const GUARD_SKIP_RATIO = 0.8;
 
     function setState(text, cls = "") {
       const el = $("sSync");
@@ -766,10 +752,6 @@
             setState("フレーム受信中", "state-frame");
             $("info").textContent = "フレーム開始";
             $("sBits").textContent = "0";
-            // ログにフレーム区切りを追加
-            rxLog += "\n[FRAME] ";
-            logEl.textContent = rxLog;
-            logEl.scrollTop = logEl.scrollHeight;
           }
         } else {
           rxSyncRun = 0;
@@ -803,7 +785,7 @@
             $("sBits").textContent = "0";
           }
         } else if (sym === "SYNC") {
-          // 無視（フレーム中にSYNCが来たら無視）
+          // 無視
         } else {
           rxStopRun = 0;
         }
@@ -835,8 +817,7 @@
 
       while (rxRing.length >= rxSlotSamples) {
         const slot = rxRing.splice(0, rxSlotSamples);
-        // ガード区間のスキップ量を 0.8 に変更
-        const skip = Math.floor(rxGrdSamples * GUARD_SKIP_RATIO);
+        const skip = Math.floor(rxGrdSamples * 0.5);
         const win = slot.slice(skip, skip + rxSymSamples);
         if (win.length < rxSymSamples * 0.8) break;
         const res = classify(new Float32Array(win), rxSR);
