@@ -416,7 +416,6 @@
       rxFrameBits = "";
       rxLog = "";
       rxFrameClockCount = 0;
-      currentSymbol = "-";
       $("sSync").textContent = "同期待機中";
       $("dispSignal").textContent = "-";
       $("dispTime").textContent = "- ms";
@@ -431,7 +430,7 @@
         rxFrameClockCount++;
       
 
-        const maxClocks = Math.max(10, +$("maxFrameClocks").value || 200);
+        const maxClocks = Math.max(10, +$("maxFrameClocks").value || 10);
         if (rxFrameClockCount > maxClocks) {
           const logEl = $("rxLog");
             addDecodeLog(rxFrameBits, hex, "（タイムアウト）", `(bit=${rxFrameBits.length}, clocks=${rxFrameClockCount})`);
@@ -443,10 +442,6 @@
             rxLog += "\n--- タイムアウトよって完了 ---\n";
             logEl.textContent = rxLog;
             logEl.scrollTop = logEl.scrollHeight;
-            currentSymbol = "-";
-            $("dispSignal").textContent = "-";
-            $("dispTime").textContent = "- ms";
-            $("dispClock").textContent = "-";
           return;
         }
       }
@@ -461,9 +456,6 @@
       const logEl = $("rxLog");
       logEl.textContent = rxLog;
       logEl.scrollTop = logEl.scrollHeight;
-
-      currentSymbol = sym;
-      $("dispSignal").textContent = sym;
 
       if (rxPhase === "frame") {
         if (sym === "B0" || sym === "B1") {
