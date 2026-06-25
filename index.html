@@ -507,7 +507,7 @@
         const clockNum = Math.floor(elapsedSamples / rxSlotSamples);
         $("dispTime").textContent = elapsedMs.toFixed(0) + " ms";
         $("dispClock").textContent = clockNum;
-        $("sSync").textContent = "フレーム受信中";
+        $("sSync").textContent = "バイナリ受信中";
       } else if (rxPhase === "syncing") {
         $("sSync").textContent = "同期待機中";
         const elapsed = (rxRing.length - syncDetectedTime) / rxSR * 1000;
