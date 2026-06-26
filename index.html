@@ -200,12 +200,13 @@
 
   <script>
     // 周波数定義
-    const FSYNC = [770, 1633];
-    const FB0 = [697, 1209];
-    const FB1 = [941, 1336];
-    const FEND = [852, 1477];
-    const ALL_LO = [697, 770, 852, 941];
-    const ALL_HI = [1209, 1336, 1477, 1633];
+    const BASE = 4000
+    const FSYNC = [BASE+770, BASE+1633];
+    const FB0 = [BASE+697, BASE+1209];
+    const FB1 = [BASE+941, BASE+1336];
+    const FEND = [BASE+852, BASE+1477];
+    const ALL_LO = [BASE+697, BASE+770, BASE+852, BASE+941];
+    const ALL_HI = [BASE+1209, BASE+1336, BASE+1477, BASE+1633];
 
     const $ = id => document.getElementById(id);
 
