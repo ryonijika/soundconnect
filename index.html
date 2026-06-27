@@ -6,177 +6,196 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>DTMF同期通信</title>
   <style>
- :root {
-  /* 定数化して管理しやすく */
-  --c-border: #808080;
-  --c-bg-light: #f8f8f8;
-  --c-text: #000000;
-  --font-base: "MS Gothic", "Osaka", "Helvetica", sans-serif;
-  --font-mono: "Courier New", "MS Gothic", monospace;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: var(--font-base);
-  color: var(--c-text);
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 12px;
-  line-height: 1.4;
-}
-
-/* 基本コンポーネント */
-.card, #decodeHistory, #decoded, #info, .status-grid, .mono {
-  border: 1px solid var(--c-border);
-  padding: 8px;
-  margin-bottom: 10px;
-  background: #fff;
-}
-
-/* ラベル・見出し */
-h2 { font-size: 18px; margin-bottom: 4px; }
-label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 4px; }
-.sub { font-size: 13px; color: #444; margin-bottom: 12px; }
-
-/* フォーム要素 */
-input, textarea, select {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #606060;
-  font-size: 13px;
-  outline: none;
-}
-input:focus, textarea:focus { border-color: #000; }
-textarea { font-family: var(--font-mono); resize: vertical; min-height: 60px; }
-
-/* ボタン */
-.btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
-button {
-  padding: 8px;
-  border: 1px solid #404040;
-  background: #f0f0f0;
-  cursor: pointer;
-}
-button.green { background: #00780a; color: #fff; }
-button.red { background: #600000; color: #fff; }
-
-/* ログ・履歴エリア */
-#decodeHistory { max-height: 280px; overflow-y: auto; }
-.log-item { display: flex; gap: 8px; padding: 6px; border-bottom: 1px solid #ddd; font-size: 12px; }
-.log-item .bits { font-family: var(--font-mono); font-weight: bold; }
-.log-item .text { font-weight: bold; background: #eee; padding: 0 4px; }
-
-/* その他 */
-.mono { font-family: var(--font-mono); white-space: pre-wrap; word-break: break-all; }
-.status-grid { display: flex; gap: 10px; background: var(--c-bg-light); font-size: 13px; }
-.val { font-weight: bold; }
-
-/* スクロールバー */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-thumb { background: #a0a0a0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "MS Gothic", "Osaka", "Helvetica", "Arial", sans-serif;
+      background: #ffffff; color: #000000;
+      padding: 16px; max-width: 900px; margin: 0 auto; line-height: 1.4;
+    }
+    h2 { font-weight: bold; font-size: 18px; margin-bottom: 2px; }
+    .sub { color: #444; font-size: 13px; margin-top: -2px; margin-bottom: 14px; }
+    .card {
+      background: #ffffff; border: 1px solid #808080;
+      padding: 12px 14px; margin-bottom: 14px;
+    }
+    .card > label { display: block; font-weight: bold; font-size: 14px; margin-bottom: 4px; }
+    .sub-label { font-weight: normal; font-size: 12px; color: #444; margin-left: 4px; }
+    .row {
+      display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end;
+    }
+    .col { flex: 1 1 140px; min-width: 110px; }
+    .col label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 2px; }
+    input, textarea, select {
+      width: 100%; padding: 4px 6px; font-size: 13px;
+      border: 1px solid #606060; background: #ffffff; color: #000000;
+      outline: none; border-radius: 0;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #000000; }
+    textarea {
+      resize: vertical; min-height: 38px;
+      font-family: "Courier New", "MS Gothic", monospace; font-size: 12px;
+    }
+    input[type="range"] { width: 100%; padding: 0; margin: 4px 0; }
+    button {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 4px 14px; font-size: 13px;
+      border: 1px solid #404040; background: #f0f0f0; color: #000000;
+      cursor: pointer; border-radius: 0; line-height: 1.4;
+    }
+    button:hover { background: #e0e0e0; border-color: #000000; }
+    button:active { background: #cccccc; }
+    button.green { background: #f0f0f0; border-color: #404040; }
+    button.green:hover { background: #e0e0e0; }
+    button.red { background: #f0f0f0; border-color: #404040; }
+    button.red:hover { background: #e0e0e0; }
+    .btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .pill {
+      display: inline-block; background: #f0f0f0; padding: 2px 10px;
+      border: 1px solid #808080; font-size: 12px; margin-right: 4px; margin-bottom: 3px;
+    }
+    .pill b { font-weight: bold; }
+    #decodeHistory {
+      max-height: 200px; overflow-y: auto;
+      background: #ffffff; border: 1px solid #808080; padding: 2px 0; font-size: 12px;
+    }
+    .log-item {
+      display: flex; flex-wrap: wrap; align-items: baseline;
+      gap: 2px 8px; padding: 3px 8px;
+      border-bottom: 1px solid #d0d0d0;
+      font-family: "Courier New", "MS Gothic", monospace;
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-item .bits { color: #000; font-weight: bold; word-break: break-all; }
+    .log-item .hex { color: #444; font-size: 11px; }
+    .log-item .text { font-weight: bold; color: #000; background: #f0f0f0; padding: 0 6px; font-family: "MS Gothic", "Helvetica", sans-serif; }
+    .log-item .note { color: #444; font-size: 11px; font-family: "MS Gothic", "Helvetica", sans-serif; margin-left: auto; }
+    .mono {
+      font-family: "Courier New", "MS Gothic", monospace; font-size: 12px;
+      background: #ffffff; padding: 6px 10px; border: 1px solid #808080;
+      max-height: 110px; overflow-y: auto; white-space: pre-wrap;
+      word-break: break-all; line-height: 1.5; color: #000;
+    }
+    #decoded { font-size: 14px; font-weight: bold; padding: 6px 10px; background: #ffffff; border: 1px solid #808080; min-height: 34px; color: #000; word-break: break-all; }
+    #info { margin-top: 10px; padding: 4px 10px; background: #f8f8f8; border: 1px solid #808080; font-size: 13px; color: #000; }
+    .status-grid {
+      display: flex; flex-wrap: wrap; gap: 8px 20px;
+      margin-top: 6px; padding: 4px 10px;
+      background: #f8f8f8; border: 1px solid #808080; font-size: 13px;
+    }
+    .status-grid span b { font-weight: bold; }
+    .status-grid .val { color: #000; font-weight: bold; }
+    @media (max-width: 640px) {
+      body { padding: 8px; }
+      .card { padding: 10px; }
+      .col { flex: 1 1 100%; min-width: 0; }
+      .row { gap: 8px; }
+      .btn-group button { flex: 1 1 auto; }
+      .pill { font-size: 11px; padding: 1px 8px; }
+      .status-grid { gap: 4px 12px; font-size: 12px; }
+    }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #f0f0f0; }
+    ::-webkit-scrollbar-thumb { background: #a0a0a0; }
+    ::-webkit-scrollbar-thumb:hover { background: #606060; }
   </style>
 </head>
 <body>
 
-  <h2>音波通信</h2>
-  <a href="./pre.html">通常verへ</a>
+  <h2>DTMF同期通信</h2>
+  <p class="sub">送信・受信</p>
+  <a href="./">簡易verへ</a>
   <div class="card">
-    <label>メッセージを受け取る</label>
-    <div id="decodeHistory">
-      <div style="font-size:12px; color:#444; padding:4px 10px;">
-        <div class="log-item">
-        </div>
-      </div>
-    </div>
-    <div class="btn-group" style="margin-top:12px;">
-      <button id="btnMic" class="green">メッセージを待機</button>
-      <button id="btnENDRx" class="red" hidden>待機状態をやめる</button>
-    </div>
-  </div>
-
-  <div class="card">
-
     <div class="row">
       <div class="col">
-        <label>メッセージを送る</label>
+        <label>テキスト</label>
         <input id="txtIn" type="text" placeholder="UTF-8" />
-        <div hidden>
+        <div class="btn-group" style="margin-top:4px;">
           <button id="btnEncode">エンコード</button>
-          <button id="btnDecode">デコード</button>
+          <button id="btnDecode" class="secondary">デコード</button>
         </div>
       </div>
-      <div hidden>
+      <div class="col">
         <label>バイナリ</label>
         <textarea id="bitIn" rows="2" placeholder=""></textarea>
       </div>
     </div>
 
-    <div hidden>
-      <div>
+    <div class="row" style="margin-top:12px;">
+      <div class="col">
         <label>シンボルコンテンツ継続時間ms</label>
         <input id="symMs" type="number" value="50" min="10" step="1" />
       </div>
-      <div>
+      <div class="col">
         <label>シンボルガード継続時間ms</label>
         <input id="grdMs" type="number" value="10" min="10" step="1" />
       </div>
-      <div>
+      <div class="col">
         <label>同期フラグ継続時間ms</label>
         <input id="syncDurationMs" type="number" value="10" min="10" max="500" step="10" />
       </div>
-      <div>
+      <div class="col">
         <label>出力振幅</label>
         <input id="amp" type="number" value="0.20" min="0.05" max="1" step="0.05" />
       </div>
     </div>
 
-    <div hidden>
-      <div>
+    <div class="row" style="margin-top:8px;">
+      <div class="col">
         <label>同期検出感度 (SNR倍率) </label>
         <input id="snrK" type="number" value="1" min="0.5" max="5.0" step="0.1" />
       </div>
-      <div>
+      <div class="col">
         <label>終了シンボルclk</label>
         <input id="ENDLen" type="number" value="5" min="3" max="20" step="1" />
       </div>
-      <div>
+      <div class="col">
         <label>タイムアウトclk</label>
         <input id="maxFrameClocks" type="number" value="1000" min="10" step="5" />
       </div>
     </div>
 
-
-    <div hidden>
-      <span>送信 <b id="sTx" style="color:#000;">何も送っていません</b></span>
-      <span>受信 <b id="sRx" style="color:#000;">-</b></span>
-      <span id="statePill">受信 <b id="sSync" style="color:#000;">待機していません</b></span>
-    </div>
-    
     <div class="btn-group" style="margin-top:12px;">
       <button id="btnSend" class="green">送信</button>
-      <button id="btnENDTx" class="red" hidden>送信をやめる</button>
+      <button id="btnENDTx" class="red">送信中断</button>
+      <button id="btnMic" class="green">受信</button>
+      <button id="btnENDRx" class="red">受信中断</button>
     </div>
 
+    <div style="margin-top:10px;">
+      <span class="pill">送信 <b id="sTx" style="color:#000;">-</b></span>
+      <span class="pill">受信 <b id="sRx" style="color:#000;">-</b></span>
+      <span class="pill" id="statePill">受信状況 <b id="sSync" style="color:#000;">-</b></span>
+    </div>
 
-
-    <div hidden id="statusGrid">
-      <span>信号: <b id="dispSignal">-</b></span>
-      <span>経過時間: <b id="dispTime">- ms</b></span>
-      <span>clk: <b id="dispClock">-</b></span>
+    <div class="status-grid" id="statusGrid">
+      <span>信号: <b id="dispSignal" class="val">-</b></span>
+      <span>経過時間: <b id="dispTime" class="val">- ms</b></span>
+      <span>clk: <b id="dispClock" class="val">-</b></span>
     </div>
 
   </div>
 
-  <div hidden>
-    <label>受信したバイナリ<span">0/1/E（同期中に表示）</span></label>
-    <div id="rxLog">-</div>
+  <div class="card">
+    <label>受信したバイナリ<span class="sub-label">0/1/E（同期中に表示）</span></label>
+    <div class="mono" id="rxLog">-</div>
   </div>
-  <div hidden>
+  <div class="card">
     <label>復号結果</label>
     <div id="decoded">—</div>
   </div>
-
+  <div class="card">
+    <label>復号結果履歴</label>
+    <div id="decodeHistory">
+      <div style="font-size:12px; color:#444; padding:4px 10px;">
+        <div class="log-item">
+          <span class="bits">バイナリ</span>
+          <span class="hex">Hex</span>
+          <span class="text">テキスト</span>
+          <span class="note">(bit, clock)</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
 
 
@@ -220,7 +239,10 @@ button.red { background: #600000; color: #fff; }
       div.className = "log-item";
       const displayText = text;
       div.innerHTML = `
+        <span class="bits">${escapeHtml(bits)}</span>
+        <span class="hex">${escapeHtml(hex)}</span>
         <span class="text">${displayText}</span>
+        <span class="note">${escapeHtml(note)}</span>
       `;
       const container = $("decodeHistory");
       container.appendChild(div);
@@ -283,19 +305,13 @@ button.red { background: #600000; color: #fff; }
     let txCtx = null, txOscLo = null, txOscHi = null, txGain = null, txOn = false;
 
     async function startSend() {
-
       if (!txCtx) txCtx = new AudioContext();
       if (txCtx.state !== "running") await txCtx.resume();
       ENDTx();
 
-      const raw = $("txtIn").value || "";
-      $("bitIn").value = textToBits(raw);
       let bits = sanitize($("bitIn").value);
       if (!bits) { alert("バイナリが空です"); return; }
       $("bitIn").value = bits;
-
-      $("btnSend").hidden = true;
-      $("btnENDTx").hidden = false;
 
       const baseSymMs = Math.max(30, +$("symMs").value || 50);
       const baseGrdMs = Math.max(10, +$("grdMs").value || 15);
@@ -321,7 +337,7 @@ button.red { background: #600000; color: #fff; }
       txOscLo.start();
       txOscHi.start();
       txOn = true;
-      $("sTx").textContent = "メッセージを送っています";
+      $("sTx").textContent = "送信中";
 
       function scheduleSequence(t0) {
         const symSec = baseSymMs / 1000;
@@ -351,11 +367,7 @@ button.red { background: #600000; color: #fff; }
       const checkCompletion = () => {
         if (txCtx.currentTime >= nextT) {
           txOn = false;
-          $("sTx").textContent = "何も送っていません";
-          
-          $("btnSend").hidden = false;
-          $("btnENDTx").hidden = true;
-
+          $("sTx").textContent = "-";
         } else {
           setTimeout(checkCompletion, 100);
         }
@@ -371,10 +383,7 @@ button.red { background: #600000; color: #fff; }
       try { txOscHi?.disconnect(); } catch {}
       try { txGain?.disconnect(); } catch {}
       txOscLo = txOscHi = txGain = null;
-      $("sTx").textContent = "何も送っていません";
-      $("btnSend").hidden = false;
-      $("btnENDTx").hidden = true;
-
+      $("sTx").textContent = "-";
     }
 
     // ---- 受信関連 ---
@@ -409,7 +418,7 @@ button.red { background: #600000; color: #fff; }
       rxFrameBits = "";
       rxLog = "";
       rxFrameClockCount = 0;
-      $("sSync").textContent = "待機しています...";
+      $("sSync").textContent = "同期待機中";
       $("dispSignal").textContent = "-";
       $("dispTime").textContent = "- ms";
       $("dispClock").textContent = "-";
@@ -431,7 +440,7 @@ button.red { background: #600000; color: #fff; }
             rxPhase = "idle";
             ENDRunCount = 0;
             rxFrameBits = "";
-            $("sSync").textContent = "待機しています...";
+            $("sSync").textContent = "同期待機中";
             rxLog += "\n--- タイムアウトよって完了 ---\n";
             logEl.textContent = rxLog;
             logEl.scrollTop = logEl.scrollHeight;
@@ -470,7 +479,7 @@ button.red { background: #600000; color: #fff; }
             rxPhase = "idle";
             ENDRunCount = 0;
             rxFrameBits = "";
-            $("sSync").textContent = "待機しています...";
+            $("sSync").textContent = "同期待機中";
             rxLog += "\n--- 終了シンボルによって完了 ---\n";
             logEl.textContent = rxLog;
             logEl.scrollTop = logEl.scrollHeight;
@@ -489,13 +498,13 @@ button.red { background: #600000; color: #fff; }
         const clockNum = Math.floor(elapsedSamples / rxSlotSamples);
         $("dispTime").textContent = elapsedMs.toFixed(0) + " ms";
         $("dispClock").textContent = clockNum;
-        $("sSync").textContent = "メッセージを通信しています";
+        $("sSync").textContent = "バイナリ受信中";
       } else if (rxPhase === "syncing") {
-        $("sSync").textContent = "待機しています...";
+        $("sSync").textContent = "同期待機中";
         const elapsed = (rxRing.length - syncDetectedTime) / rxSR * 1000;
         $("dispTime").textContent = elapsed.toFixed(0) + " ms";
       } else {
-        $("sSync").textContent = "待機しています...";
+        $("sSync").textContent = "同期待機中";
       }
     }
 
@@ -512,7 +521,7 @@ button.red { background: #600000; color: #fff; }
           if (isSync(new Float32Array(win), rxSR)) {
             rxPhase = "syncing";
             syncDetectedTime = rxRing.length - syncWindowSamples;
-            $("sSync").textContent = "待機しています...";
+            $("sSync").textContent = "同期待機中";
             const loP = ALL_LO.map(f => goertzel(win, f, rxSR));
             const hiP = ALL_HI.map(f => goertzel(win, f, rxSR));
             const score = loP[ALL_LO.indexOf(FSYNC[0])] + hiP[ALL_HI.indexOf(FSYNC[1])];
@@ -531,7 +540,7 @@ button.red { background: #600000; color: #fff; }
           rxFrameBits = "";
           rxLog = "";
           $("rxLog").textContent = "";
-          $("sSync").textContent = "メッセージを通信しています";
+          $("sSync").textContent = "同期中";
 
           if (syncDetectedTime > rxSlotSamples * 10) {
             rxRing.splice(0, syncDetectedTime - rxSlotSamples);
@@ -544,7 +553,7 @@ button.red { background: #600000; color: #fff; }
             const win = rxRing.slice(-syncWindowSamples);
             if (!isSync(new Float32Array(win), rxSR)) { 
               rxPhase = "idle";
-              $("sSync").textContent = "待機しています...";
+              $("sSync").textContent = "同期待機中";
             }
           }
         }
@@ -592,9 +601,6 @@ button.red { background: #600000; color: #fff; }
           video: false
         });
       } catch (e) { alert("マイク失敗: " + e.message); return; }
-
-      $("btnMic").hidden = true;
-      $("btnENDRx").hidden = false;
 
       rxActive = true;
       rxSR = rxCtx.sampleRate;
@@ -653,13 +659,10 @@ registerProcessor("raw-collector",RawCollector);
       rxStream?.getTracks().forEach(t => t.stop());
       rxNode = rxSrc = rxStream = rxMute = null;
       $("sRx").textContent = "-";
-      $("sSync").textContent = "待機していません";
+      $("sSync").textContent = "-";
       $("dispSignal").textContent = "-";
       $("dispTime").textContent = "- ms";
       $("dispClock").textContent = "-";
-      $("btnMic").hidden = false;
-      $("btnENDRx").hidden = true;
-
     }
 
     // ---- ボタン ----
