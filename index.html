@@ -123,15 +123,15 @@
     <div class="row" style="margin-top:12px;">
       <div class="col">
         <label>シンボルコンテンツ継続時間ms</label>
-        <input id="symMs" type="number" value="50" min="10" step="1" />
+        <input id="symMs" type="number" value="100" min="10" step="1" />
       </div>
       <div class="col">
         <label>シンボルガード継続時間ms</label>
-        <input id="grdMs" type="number" value="10" min="10" step="1" />
+        <input id="grdMs" type="number" value="50" min="10" step="1" />
       </div>
       <div class="col">
         <label>同期フラグ継続時間ms</label>
-        <input id="syncDurationMs" type="number" value="10" min="10" max="500" step="10" />
+        <input id="syncDurationMs" type="number" value="150" min="10" max="500" step="10" />
       </div>
       <div class="col">
         <label>出力振幅</label>
@@ -314,9 +314,9 @@
       $("bitIn").value = bits;
 
       const baseSymMs = Math.max(30, +$("symMs").value || 50);
-      const baseGrdMs = Math.max(10, +$("grdMs").value || 15);
+      const baseGrdMs = Math.max(10, +$("grdMs").value || 10);
       const grdMs = Math.max(baseGrdMs, baseSymMs * 0.2);
-      const syncDurationMs = Math.max(50, +$("syncDurationMs").value || 200); // ← 200ms
+      const syncDurationMs = Math.max(50, +$("syncDurationMs").value || 100); // ← 200ms
       const ENDLen = Math.max(3, +$("ENDLen").value || 5);
       const amp = Math.min(1, Math.max(0.05, +$("amp").value || 0.20)); // ← 0.20
 
@@ -512,7 +512,7 @@
       if (!rxActive) return;
       for (const v of chunk) rxRing.push(v);
 
-      const syncDurationMs = Math.max(50, +$("syncDurationMs").value || 200); // ← 200ms
+      const syncDurationMs = Math.max(50, +$("syncDurationMs").value || 100); // ← 200ms
       const syncDurationSamples = Math.round(rxSR * syncDurationMs / 1000);
       
       if (rxPhase === "idle") {
@@ -605,7 +605,7 @@
       rxActive = true;
       rxSR = rxCtx.sampleRate;
       const symMs = Math.max(30, +$("symMs").value || 50);
-      const grdMs = Math.max(10, +$("grdMs").value || 15);
+      const grdMs = Math.max(10, +$("grdMs").value || 10);
       rxSymSamples = Math.round(rxSR * symMs / 1000);
       rxGrdSamples = Math.round(rxSR * grdMs / 1000);
       if (rxSymSamples < 32) rxSymSamples = 32;
